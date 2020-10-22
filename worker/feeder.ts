@@ -38,7 +38,7 @@ class Queue {
       }
     })();
 
-    const poll = this.nc.subscribe("poll");
+    const poll = this.nc.subscribe("poll", {queue: "feeder"});
     const _ = (async () => {
       for await (const m of poll) {
         const job = this.work.length ? this.work[0] : undefined;

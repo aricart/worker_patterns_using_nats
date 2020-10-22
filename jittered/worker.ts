@@ -29,6 +29,11 @@ class Worker {
     (async () => {
       for await (const m of w) {
         // response is out of band or we block the event loop
+        // this means that this loop won't process more requests
+        // until it blocks, yet, in the mean while the cmd loop
+        // below has been lying and responding with a status
+        // that specifies a false load potentially queuing
+        // more work for this node.
         this.work(m);
       }
     })();
@@ -44,6 +49,13 @@ class Worker {
             this.done.resolve();
             break;
           case "cmd.status":
+            // this load is not right, because we are providing a status where
+            // we are on the processing not on what is queued up...
+            // we can tweak this further by doing:
+            // w.getPending() + this.load as the current load
+            // but this accuracy again depends on whether the worker loop
+            // suspends, if it is busy it may have not had time to
+            // process the inbound, or send the outbound...
             console.info(`${this.id} status - load: ${this.load}`);
             await delay(this.load * 100);
             m.respond(
